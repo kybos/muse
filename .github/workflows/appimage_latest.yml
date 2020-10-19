@@ -1,11 +1,8 @@
 name: Create AppImage latest
 
+on: push
 #on: workflow_dispatch
 #on: pull_request
-on: push
-#on: 
-#  schedule:
-#    - cron: '0 7 * * MON'
 
 env: 
   BUILD_TYPE: Release
@@ -92,4 +89,3 @@ jobs:
       with:
         name: AppImage current master
         path: ${{runner.workspace}}/build/MusE-master-x86_64.AppImage
-  
