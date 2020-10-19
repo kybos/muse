@@ -92,7 +92,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: AppImage current master
-        path: ${{runner.workspace}}/build/MMusE-master-x86_64.AppImage
+        path: ${{runner.workspace}}/build/MusE-master-x86_64.AppImage
     
       #uses: "marvinpinto/action-automatic-releases@latest"
       #with:
