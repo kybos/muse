@@ -18,7 +18,7 @@ env:
   BUILD_TYPE: Release
 #  TAG: muse_3_2_0_pre1
   TAG: ${{ github.event.inputs.tag }}
-  PRERELEASE: true
+#  PRERELEASE: true
 
 jobs:
   build:
