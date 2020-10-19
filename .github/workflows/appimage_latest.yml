@@ -1,9 +1,11 @@
 name: Create AppImage latest
 
 #on: workflow_dispatch
-on: 
-  schedule:
-    - cron: '0 7 * * MON'
+#on: pull_request
+on: push
+#on: 
+#  schedule:
+#    - cron: '0 7 * * MON'
 
 env: 
   BUILD_TYPE: Release
@@ -13,7 +15,7 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2  
                  
     - name: Install Deps
       run: |
@@ -85,11 +87,17 @@ jobs:
         export VERSION=master #linuxdeployqt uses this for naming the file
         ./linuxdeploy-plugin-appimage-x86_64.AppImage --appdir appdir 
         
-    - name: Upload AppImage      
-      uses: "marvinpinto/action-automatic-releases@latest"
+    - name: Upload AppImage   
+      
+    - uses: actions/upload-artifact@v2
       with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest"
-        prerelease: true
-        title: "Current master (experimental)"
-        files: ${{runner.workspace}}/build/MusE*.AppImage
+        name: AppImage current master
+        path: ${{runner.workspace}}/build/MMusE-master-x86_64.AppImage
+    
+      #uses: "marvinpinto/action-automatic-releases@latest"
+      #with:
+      #  repo_token: "${{ secrets.GITHUB_TOKEN }}"
+      #  automatic_release_tag: "latest"
+      #  prerelease: true
+      #  title: "Current master (experimental)"
+      #  files: ${{runner.workspace}}/build/MusE*.AppImage
