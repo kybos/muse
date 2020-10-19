@@ -1,8 +1,8 @@
 name: Create AppImage latest
 
-on: push
+#on: push
 #on: workflow_dispatch
-#on: pull_request
+on: pull_request
 
 env: 
   BUILD_TYPE: Release
