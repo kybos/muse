@@ -87,17 +87,9 @@ jobs:
         export VERSION=master #linuxdeployqt uses this for naming the file
         ./linuxdeploy-plugin-appimage-x86_64.AppImage --appdir appdir 
         
-    - name: Upload AppImage   
-      
+    - name: Upload AppImage  
     - uses: actions/upload-artifact@v2
       with:
         name: AppImage current master
         path: ${{runner.workspace}}/build/MusE-master-x86_64.AppImage
-    
-      #uses: "marvinpinto/action-automatic-releases@latest"
-      #with:
-      #  repo_token: "${{ secrets.GITHUB_TOKEN }}"
-      #  automatic_release_tag: "latest"
-      #  prerelease: true
-      #  title: "Current master (experimental)"
-      #  files: ${{runner.workspace}}/build/MusE*.AppImage
+  
