@@ -82,6 +82,10 @@
 #include <fcntl.h>
 #include <sord/sord.h>
 
+#include <QX11Info>
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 // Uncomment to print audio process info.
 //#define LV2_DEBUG_PROCESS
@@ -1372,6 +1376,7 @@ int LV2Synth::lv2ui_Resize(LV2UI_Feature_Handle handle, int width, int height)
             mainWin->resize(width, height);
         }
 
+        // is this really necessary? Central widget should adjust to main window automatically
         QWidget *ewWin = ((LV2PluginWrapper_Window *)state->widget)->findChild<QWidget *>();
         if(ewWin != nullptr)
         {
@@ -1390,6 +1395,7 @@ int LV2Synth::lv2ui_Resize(LV2UI_Feature_Handle handle, int width, int height)
                 ewCent->resize(width, height);
             }
         }
+
         state->uiX11Size.setWidth(width);
         state->uiX11Size.setHeight(height);
 
@@ -1719,6 +1725,8 @@ void LV2Synth::lv2ui_ShowNativeGui(LV2PluginWrapper_State *state, bool bShow, bo
                     }
                     else
                     {
+                        win->setXWin(reinterpret_cast<Window>(uiW));
+
                         // Set the minimum size to the supplied uiX11Size.
                          if (fixScaling && win->devicePixelRatio() >= 1.0) {
                              state->uiX11Size.setWidth(qRound((qreal)state->uiX11Size.width() / win->devicePixelRatio()));
@@ -1766,7 +1774,7 @@ void LV2Synth::lv2ui_ShowNativeGui(LV2PluginWrapper_State *state, bool bShow, bo
 
 const void *LV2Synth::lv2state_stateRetreive(LV2_State_Handle handle, uint32_t key, size_t *size, uint32_t *type, uint32_t *flags)
 {
-    QMap<QString, QPair<QString, QVariant> >::const_iterator it;
+//    QMap<QString, QPair<QString, QVariant> >::const_iterator it;
     LV2PluginWrapper_State *state = (LV2PluginWrapper_State *)handle;
     LV2Synth *synth = state->synth;
     const char *cKey = synth->unmapUrid(key);
@@ -1774,8 +1782,8 @@ const void *LV2Synth::lv2state_stateRetreive(LV2_State_Handle handle, uint32_t k
     assert(cKey != nullptr); //should'n happen
 
     QString strKey = QString(cKey);
-    it = state->iStateValues.find(strKey);
-    if(it != state->iStateValues.end())
+    const auto& it = state->iStateValues.constFind(strKey);
+    if(it != state->iStateValues.constEnd())
     {
         if(it.value().second.type() == QVariant::ByteArray)
         {
@@ -1854,8 +1862,8 @@ LV2_State_Status LV2Synth::lv2state_stateStore(LV2_State_Handle handle, uint32_t
         const char *uriType = synth->unmapUrid(type);
         assert(uriType != nullptr && uriKey != nullptr); //FIXME: buggy plugin or uridBiMap realization?
         QString strKey = QString(uriKey);
-        QMap<QString, QPair<QString, QVariant> >::const_iterator it = state->iStateValues.find(strKey);
-        if(it == state->iStateValues.end())
+        const auto& it = state->iStateValues.constFind(strKey);
+        if(it == state->iStateValues.constEnd())
         {
             QString strUriType = uriType;
             QVariant varVal = QByteArray((const char *)value, size);
@@ -1990,7 +1998,7 @@ void LV2Synth::lv2conf_set(LV2PluginWrapper_State *state, const std::vector<QStr
     }
 
     QMap<QString, QPair<QString, QVariant> >::const_iterator it;
-    for(it = state->iStateValues.begin(); it != state->iStateValues.end(); ++it)
+    for(it = state->iStateValues.constBegin(); it != state->iStateValues.constEnd(); ++it)
     {
         QString name = it.key();
         QVariant qVal = it.value().second;
@@ -5655,6 +5663,8 @@ LV2PluginWrapper_Window::LV2PluginWrapper_Window(LV2PluginWrapper_State *state,
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGui()));
     connect(this, SIGNAL(makeStopFromGuiThread()), this, SLOT(stopFromGuiThread()));
     connect(this, SIGNAL(makeStartFromGuiThread()), this, SLOT(startFromGuiThread()));
+
+    m_xWin = 0;
 }
 
 LV2PluginWrapper_Window::~LV2PluginWrapper_Window()
@@ -5669,13 +5679,72 @@ void LV2PluginWrapper_Window::startNextTime()
     emit makeStartFromGuiThread();
 }
 
-
-
-
 void LV2PluginWrapper_Window::stopNextTime()
 {
     setClosing(true);
     emit makeStopFromGuiThread();
+}
+
+void LV2PluginWrapper_Window::setXWin(unsigned long xWin)
+{
+    m_xWin = xWin;
+
+    XWindowAttributes attrs{};
+    XSizeHints hints{};
+    long supplied{};
+    XSync(QX11Info::display(), False);
+    XGetWindowAttributes(QX11Info::display(), m_xWin, &attrs);
+    XGetWMNormalHints(QX11Info::display(), m_xWin, &hints, &supplied);
+
+    if ((hints.flags & PBaseSize)) {
+      setBaseSize(hints.base_width, hints.base_height);
+    }
+
+    if ((hints.flags & PMinSize)) {
+      setMinimumSize(hints.min_width, hints.min_height);
+    }
+
+    if ((hints.flags & PMaxSize)) {
+      setMaximumSize(hints.max_width, hints.max_height);
+    }
+}
+
+//QSize sizeHint() const
+//{
+//  if (m_xWin) {
+//    XWindowAttributes attrs{};
+//    XGetWindowAttributes(QX11Info::display(), m_xWin, &attrs);
+//    return {attrs.width, attrs.height};
+//  }
+
+//  return QWidget::sizeHint();
+//}
+
+//QSize minimumSizeHint() const
+//{
+//  if (m_xWin) {
+//    XSizeHints hints{};
+//    long       supplied{};
+//    XGetWMNormalHints(QX11Info::display(), m_xWin, &hints, &supplied);
+//    if ((hints.flags & PMinSize)) {
+//      return {hints.min_width, hints.min_height};
+//    }
+//  }
+
+//  return QWidget::minimumSizeHint();
+//}
+
+void LV2PluginWrapper_Window::resizeEvent(QResizeEvent *e)
+{
+    assert(_state != nullptr);
+
+    QWidget::resizeEvent(e);
+
+    if (m_xWin) {
+      XResizeWindow(QX11Info::display(), m_xWin,
+                    static_cast<unsigned>(e->size().width()),
+                    static_cast<unsigned>(e->size().height()));
+    }
 }
 
 void LV2PluginWrapper_Window::updateGui()

@@ -862,23 +862,28 @@ class LV2PluginWrapper_Window : public QMainWindow
 {
    Q_OBJECT
 protected:
-   void closeEvent ( QCloseEvent *event );
-   void showEvent(QShowEvent *e);
-   void hideEvent(QHideEvent *e);
+   void closeEvent ( QCloseEvent *event ) override;
+   void showEvent(QShowEvent *e) override;
+   void hideEvent(QHideEvent *e) override;
+   void resizeEvent(QResizeEvent *e) override;
+//   QSize sizeHint() const override;
+//   QSize minimumSizeHint() const override;
 private:
    LV2PluginWrapper_State *_state;
    bool _closing;
+   unsigned long m_xWin;
    QTimer updateTimer;
    void stopUpdateTimer();
 public:
    explicit LV2PluginWrapper_Window ( LV2PluginWrapper_State *state, 
-                                      QWidget *parent = Q_NULLPTR, 
+                                      QWidget *parent = nullptr,
                                       Qt::WindowFlags flags = Qt::WindowFlags());
    ~LV2PluginWrapper_Window();
    void startNextTime();
    void stopNextTime();
    void doChangeControls();
    void setClosing(bool closing) {_closing = closing; }
+   void setXWin(unsigned long xWin);
 signals:
    void makeStopFromGuiThread();
    void makeStartFromGuiThread();
