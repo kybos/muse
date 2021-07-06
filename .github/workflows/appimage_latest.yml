@@ -138,10 +138,10 @@ jobs:
         ./linuxdeploy-x86_64.AppImage --appdir appdir --plugin qt
         
         mkdir -p appdir/usr/optional/
-        wget -c https://github.com/darealshinji/AppImageKit-checkrt/releases/download/continuous/exec-x86_64.so -O ./appdir/usr/optional/exec.so
-        cd appdir
-        rm AppRun.wrapped
-        wget -c https://github.com/darealshinji/AppImageKit-checkrt/releases/download/continuous/AppRun-patched-x86_64 -O AppRun.wrapped ; chmod a+x AppRun.wrapped
+        wget -c https://github.com/darealshinji/AppImageKit-checkrt/releases/download/continuous/exec-x86_64.so -O appdir/usr/optional/exec.so
+        rm appdir/AppRun.wrapped
+        wget -c https://github.com/darealshinji/AppImageKit-checkrt/releases/download/continuous/AppRun-patched-x86_64 -O appdir/AppRun.wrapped
+        chmod a+x appdir/AppRun.wrapped
         
         echo '#! /usr/bin/env bash' > appdir/AppRun
         echo 'set -e' >> appdir/AppRun
